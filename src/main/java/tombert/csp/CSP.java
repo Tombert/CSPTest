@@ -1,6 +1,7 @@
 package tombert.csp;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 import java.util.concurrent.BlockingQueue;
@@ -17,6 +18,28 @@ public class CSP {
     public static <R> BlockingQueue<R> returned(R init) {
         var retChan = new LinkedBlockingQueue<R>();
         retChan.offer(init);
+        return retChan;
+    }
+
+    public static <R> BlockingQueue<List<R>> chunk(int size, BlockingQueue<R> init) {
+        var retChan = new LinkedBlockingQueue<List<R>>();
+
+        Thread.startVirtualThread(() -> {
+            var buffer = new ArrayList<R>();
+            while (true) {
+                try {
+                    var current = init.take();
+                    buffer.add(current);
+                    if (buffer.size() >= size) {
+                        retChan.put(buffer);
+                    }
+                    buffer = new ArrayList<>();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        });
         return retChan;
     }
 
@@ -57,6 +80,25 @@ public class CSP {
                     throw new RuntimeException(e);
                 }
             }
+        });
+        return retChan;
+    }
+
+    public static <R> BlockingQueue<R> filter(Function<R, Boolean> f, BlockingQueue<R> init) {
+        var retChan = new LinkedBlockingQueue<R>();
+        Thread.startVirtualThread(() -> {
+           while (true) {
+               try {
+                   var current = init.take();
+                   var res = f.apply(current);
+                   if (res) {
+                       retChan.put(current);
+                   }
+               } catch (InterruptedException e) {
+                   throw new RuntimeException(e);
+               }
+
+           }
         });
         return retChan;
     }
