@@ -35,7 +35,8 @@ public class CSP {
                     }
                     buffer = new ArrayList<>();
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
 
@@ -56,12 +57,14 @@ public class CSP {
                                 var next2 = next.take();
                                 retChan.put(next2);
                             } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
+                                Thread.currentThread().interrupt();
+                                break;
                             }
                         }
                     });
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         });
@@ -77,7 +80,8 @@ public class CSP {
                     var newThing = f.apply(current);
                     retChan.put(newThing);
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         });
@@ -95,7 +99,8 @@ public class CSP {
                        retChan.put(current);
                    }
                } catch (InterruptedException e) {
-                   throw new RuntimeException(e);
+                   Thread.currentThread().interrupt();
+                   break;
                }
 
            }
@@ -110,7 +115,7 @@ public class CSP {
                 Thread.sleep(tout.toMillis());
                 retChan.put(Signals.DONE);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.currentThread().interrupt();
             }
         });
         return retChan;
@@ -122,7 +127,7 @@ public class CSP {
            try {
                retChan.put(res);
            } catch (InterruptedException e) {
-               throw new RuntimeException(e);
+               Thread.currentThread().interrupt();
            }
 
        });
@@ -136,7 +141,7 @@ public class CSP {
             try {
                 retChan.put(Signals.DONE);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.currentThread().interrupt();
             }
         });
         return retChan;
@@ -146,7 +151,6 @@ public class CSP {
         Thread.startVirtualThread(() -> {
             while(true) {
                 f.run();
-                Thread.yield();
             }
         });
     }
@@ -154,7 +158,6 @@ public class CSP {
 
 
     public static BlockingQueue<Object> select(List<BlockingQueue<Object>> channels) {
-        @SuppressWarnings("unchecked")
         var chans =  channels.toArray(BlockingQueue[]::new);
         return select(chans);
     }
@@ -178,7 +181,7 @@ public class CSP {
            try {
                    retChan.put(i);
            } catch (InterruptedException e) {
-               throw new RuntimeException(e);
+               Thread.currentThread().interrupt();
            }
         });
         return retChan;
